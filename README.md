@@ -63,8 +63,6 @@ python -m pytest
 
 ### What the tests cover
 
-The 17 tests in [tests/test_pawpal.py](tests/test_pawpal.py) check the scheduling behavior:
-
 - **Tasks and pets:** marking a task complete, and adding tasks to a pet.
 - **Input checks:** a zero or negative duration and an unknown priority are rejected; a duplicate task name is rejected for the same pet but allowed for a different pet, and a completed task's name can be reused.
 - **Sorting:** `Scheduler.sort_by_time()` puts tasks in chronological order (`"8:30"` before `"09:15"`) with untimed tasks last, and `generate_plan()` returns its tasks in time order even when priorities differ, including after some tasks are dropped for lack of time.
@@ -92,26 +90,120 @@ All 17 tests pass, and they cover the core logic, which are sorting, filtering, 
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
-
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Priority-based planning | `Scheduler.generate_plan()` | Takes tasks from high to low priority until the owner's available minutes run out; tasks that don't fit are skipped, so the least important ones are dropped. |
+| Task sorting | `Scheduler.sort_by_time()` | Orders tasks by preferred time using real hours and minutes, so 8:30 comes before 9:15. Tasks with no time go last. |
+| Filtering | `Owner.filter_tasks()` | Narrows tasks by pet, by pending or completed status, or both. Pet names ignore capitalization. |
+| Conflict handling | `Scheduler.detect_conflicts()` | Warns when tasks share a start time, for one pet or across pets. Only warns, never changes the plan. Does not catch partial overlaps. |
+| Recurring tasks | `Scheduler.complete_task()` | Completing a daily or weekly task creates the next occurrence using date arithmetic that handles month ends, year ends and leap days. One-time tasks don't repeat. |
+| Future tasks held back | `Scheduler.generate_plan()` | A repeating task's next occurrence is only planned once its due date arrives. |
+| Completed tasks excluded | `Scheduler.generate_plan()` | Finished tasks are never scheduled again. |
+| Duplicate prevention | `Pet.add_task()` | A pet can't have two pending tasks with the same name. Different pets can share a name, and a completed task's name can be reused. |
+| Input validation | `Task.__post_init__()` | Rejects a zero or negative duration and an unrecognized priority. The app also rejects a preferred time that isn't a valid HH:MM. |
+| Plan explanations | `Scheduler.explain()` | Gives a plain-language reason for each scheduled or skipped task, including how many available minutes were used. |
 
 ## 📸 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
+### What you can do in the app
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+- Enter the owner's name and how many minutes they have available today.
+- Add pets, each with a name and species.
+- Add tasks to a pet with a title, duration, priority, optional preferred time and a repeat setting of daily, weekly or once.
+- View all tasks sorted by time, and filter them by pet or by pending and completed status.
+- Mark a task complete, which automatically creates the next occurrence for daily and weekly tasks.
+- Generate a schedule that shows the planned tasks, minutes used, any conflict warnings, any skipped tasks and an explanation of the plan.
 
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+### Example workflow
+
+1. Enter the owner's name and available minutes, then add a pet such as Biscuit the dog.
+2. Add a few tasks for Biscuit, such as a morning walk at 08:00 and grooming at 18:00, in any order.
+3. Use the pet and status filters to check the task list, which is always shown in time order.
+4. Click "Generate schedule" to see today's plan, with a warning if two tasks share a start time and a note on anything that was skipped.
+5. Mark the walk complete and see the next day's walk appear as a new task that stays out of today's plan.
+
+### Scheduler behaviors on display
+
+- Tasks are picked by priority until the available time runs out, so lower-priority tasks are the ones skipped.
+- The final plan is sorted by time, with untimed tasks at the end.
+- Tasks at the same start time trigger a warning, whether they belong to one pet or to different pets.
+- Completing a daily or weekly task creates the next occurrence, and finished tasks never reappear in the plan.
+- The plan comes with a plain-language explanation of every task that was scheduled or skipped.
+
+### Sample output from main.py
+
+```
+All tasks, in the order they were added:
+  18:00  Grooming (Biscuit, 45 min, done)
+  8:00  Morning walk (Biscuit, 30 min, pending)
+  --:--  Brush teeth (Biscuit, 5 min, pending)
+  08:00  Flea treatment (Biscuit, 5 min, pending)
+  09:00  Vet call (Biscuit, 10 min, pending)
+  16:30  Play session (Whiskers, 20 min, done)
+  13:00  Medication (Whiskers, 5 min, pending)
+  09:00  Feeding (Whiskers, 10 min, pending)
+
+All tasks, sorted by time:
+  8:00  Morning walk (Biscuit, 30 min, pending)
+  08:00  Flea treatment (Biscuit, 5 min, pending)
+  09:00  Vet call (Biscuit, 10 min, pending)
+  09:00  Feeding (Whiskers, 10 min, pending)
+  13:00  Medication (Whiskers, 5 min, pending)
+  16:30  Play session (Whiskers, 20 min, done)
+  18:00  Grooming (Biscuit, 45 min, done)
+  --:--  Brush teeth (Biscuit, 5 min, pending)
+
+Biscuit's tasks:
+  18:00  Grooming (Biscuit, 45 min, done)
+  8:00  Morning walk (Biscuit, 30 min, pending)
+  --:--  Brush teeth (Biscuit, 5 min, pending)
+  08:00  Flea treatment (Biscuit, 5 min, pending)
+  09:00  Vet call (Biscuit, 10 min, pending)
+
+Whiskers' tasks, sorted by time:
+  09:00  Feeding (Whiskers, 10 min, pending)
+  13:00  Medication (Whiskers, 5 min, pending)
+  16:30  Play session (Whiskers, 20 min, done)
+
+Pending tasks:
+  8:00  Morning walk (Biscuit, 30 min, pending)
+  --:--  Brush teeth (Biscuit, 5 min, pending)
+  08:00  Flea treatment (Biscuit, 5 min, pending)
+  09:00  Vet call (Biscuit, 10 min, pending)
+  13:00  Medication (Whiskers, 5 min, pending)
+  09:00  Feeding (Whiskers, 10 min, pending)
+
+Completed tasks:
+  18:00  Grooming (Biscuit, 45 min, done)
+  16:30  Play session (Whiskers, 20 min, done)
+
+Whiskers' pending tasks, sorted by time:
+  09:00  Feeding (Whiskers, 10 min, pending)
+  13:00  Medication (Whiskers, 5 min, pending)
+
+Today's Schedule for Jordan (90 min available)
+--------------------------------------------------
+8:00 - Morning walk for Biscuit (30 min) [priority: high]
+08:00 - Flea treatment for Biscuit (5 min) [priority: high]
+09:00 - Vet call for Biscuit (10 min) [priority: high]
+09:00 - Feeding for Whiskers (10 min) [priority: high]
+13:00 - Medication for Whiskers (5 min) [priority: high]
+--:-- - Brush teeth for Biscuit (5 min) [priority: low]
+
+Conflict check:
+  Warning: 2 tasks at 8:00: Morning walk (Biscuit), Flea treatment (Biscuit)
+  Warning: 2 tasks at 09:00: Vet call (Biscuit), Feeding (Whiskers)
+
+Why this plan?
+Jordan has 90 minutes available today. Tasks were chosen by priority (high, then medium, then low) until time ran out, then ordered by preferred time.
+Scheduled 65 of 90 minutes (25 left).
+  + Morning walk for Biscuit at 8:00: high priority, fits in 30 min.
+  + Flea treatment for Biscuit at 08:00: high priority, fits in 5 min.
+  + Vet call for Biscuit at 09:00: high priority, fits in 10 min.
+  + Feeding for Whiskers at 09:00: high priority, fits in 10 min.
+  + Medication for Whiskers at 13:00: high priority, fits in 5 min.
+  + Brush teeth for Biscuit: low priority, fits in 5 min.
+```
 
 ## Implementation Sumamry
 The Owner class holds a list of Pet objects and a daily availability in minutes, and each Pet holds its own Task objects (name, category, duration, priority, preferred time, completion status). A Scheduler takes an Owner, gathers all of their pets' incomplete tasks, picks them by priority (high, then medium, then low) until the owner's available minutes run out, and sorts the chosen tasks by preferred time. It keeps the scheduled and skipped tasks in two lists, and its explain() method turns those lists into a plain-text reason for each decision, which main.py prints as "Today's Schedule" and "Why this plan?"

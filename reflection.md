@@ -50,13 +50,17 @@
 **a. Constraints and priorities**
 
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
+    - First constraint is the owner's availability, so only tasks that can fit in that time will be added
+    - Next is priority because the user intentionally set that constraint, so the algorithm will follow it
 - How did you decide which constraints mattered most?
+    - Logistically, the time constraint has to be the most important thing because if the owner set that they only have that amount of time to work, the algorithm should follow that
 
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
+    - The generate_plan function sorts by priority and takes each task that still fits in the remaining minutes, instead of checking if there's an option where more tasks can be added, it would just start with high priority tasks and go from there
 - Why is that tradeoff reasonable for this scenario?
-
+    - It would be much easier to explain the plan and would mean writing more code
 ---
 
 ## 3. AI Collaboration

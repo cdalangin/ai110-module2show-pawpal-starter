@@ -95,3 +95,43 @@ Describe your app in numbered steps so a reader can follow along without watchin
 
 ## Implementation Sumamry
 The Owner class holds a list of Pet objects and a daily availability in minutes, and each Pet holds its own Task objects (name, category, duration, priority, preferred time, completion status). A Scheduler takes an Owner, gathers all of their pets' incomplete tasks, picks them by priority (high, then medium, then low) until the owner's available minutes run out, and sorts the chosen tasks by preferred time. It keeps the scheduled and skipped tasks in two lists, and its explain() method turns those lists into a plain-text reason for each decision, which main.py prints as "Today's Schedule" and "Why this plan?"
+
+## Smart Scheduling
+
+### Sorting by time: `Scheduler.sort_by_time(tasks)`
+
+Orders tasks by their preferred `HH:MM` time, earliest first. The sort key is a lambda that turns each time into an `(hour, minute)` integer tuple, so `"8:30"` sorts before `"09:15"` (comparing the raw strings would get that wrong). Tasks with no preferred time go last. It returns a new list and does not change the one you pass in.
+
+`generate_plan()` uses it to put the chosen tasks in time order. Priority still decides *which* tasks make it into the plan (highest first, until the owner's minutes run out); preferred time only decides the order they appear in.
+
+### Filtering: `Owner.filter_tasks(pet_name=None, completed=None)`
+
+Returns the tasks across all of an owner's pets that match the filters you give:
+
+- `pet_name` keeps one pet's tasks. The match ignores case, so `"rex"` finds `"Rex"`.
+- `completed=True` keeps finished tasks and `completed=False` keeps pending ones.
+- A filter left as `None` is ignored, and passing both requires both to match.
+
+`Owner.get_all_tasks()` is the unfiltered version. The results keep the order tasks were added, so pass them to `Scheduler.sort_by_time()` to order them by time. `generate_plan()` also leaves out completed tasks and tasks whose `due_date` is still in the future.
+
+### Conflict detection: `Scheduler.detect_conflicts()`
+
+A lightweight check that returns warning messages and never raises or changes the plan. Call it after `generate_plan()`. It groups the scheduled tasks by start time and reports every time that has more than one task, whether they belong to the same pet or to different pets:
+
+```
+Warning: 2 tasks at 8:00: Morning walk (Biscuit), Flea treatment (Biscuit)
+Warning: 2 tasks at 09:00: Vet call (Biscuit), Feeding (Whiskers)
+```
+
+Times are compared as numbers, so `"8:00"` and `"08:00"` count as the same time. Tasks with no preferred time are ignored. **Tradeoff:** it only catches identical start times. A 30-minute walk at 08:00 and a feeding at 08:15 overlap but are not flagged.
+
+### Recurring tasks: `Scheduler.complete_task(task)`
+
+Marks a task complete and, if its `frequency` is `"daily"` or `"weekly"`, adds the next occurrence to the same pet. The new task is an incomplete copy with a `due_date` one step later, computed with `timedelta` (`timedelta(days=1)` or `timedelta(weeks=1)`), so month, year and leap-day rollover are handled. The step is added to the task's own `due_date`, or to today if it has none, so a weekly task finished late stays on its weekly rhythm. Other frequencies, such as `"once"`, do not recur and the method returns `None`.
+
+`generate_plan()` skips tasks whose `due_date` is still in the future, so completing today's walk does not put tomorrow's walk back in today's plan. Call `complete_task()` rather than `Task.mark_complete()` when you want recurrence, because only the scheduler knows which pet owns the task.
+
+### Input checks
+
+- `Task` rejects a duration of zero or less and any priority other than `high`, `medium` or `low`.
+- `Pet.add_task()` rejects a second incomplete task with the same name for the same pet (ignoring case). Two different pets can share a task name.

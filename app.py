@@ -77,8 +77,12 @@ if st.button("Add task"):
         st.warning("Add a pet first.")
     else:
         pet = next(p for p in owner.pets if p.name == task_pet)
-        pet.add_task(Task(task_title, "general", int(duration), priority))
-        st.success(f"Added '{task_title}' to {task_pet}.")
+        try:
+            pet.add_task(Task(task_title, "general", int(duration), priority))
+        except ValueError as err:
+            st.warning(str(err))
+        else:
+            st.success(f"Added '{task_title}' to {task_pet}.")
 
 all_tasks = owner.get_all_tasks()
 if all_tasks:

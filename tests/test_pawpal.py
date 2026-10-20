@@ -162,3 +162,33 @@ def test_detect_conflicts_empty_when_no_clashes():
     scheduler.generate_plan()
 
     assert scheduler.detect_conflicts() == []
+
+
+def test_generate_plan_returns_tasks_in_chronological_order():
+    owner = Owner("J", 120)
+    rex, tom = Pet("Rex", "dog"), Pet("Tom", "cat")
+    owner.pets += [rex, tom]
+    # Added out of time order, with priorities that differ from the time order.
+    rex.add_task(Task("evening", "x", 10, "low", preference="18:00"))
+    tom.add_task(Task("noon", "x", 10, "medium", preference="12:00"))
+    rex.add_task(Task("early", "x", 10, "high", preference="8:15"))
+    tom.add_task(Task("untimed", "x", 10, "high"))
+
+    plan = Scheduler(owner).generate_plan()
+
+    assert [t.name for t in plan] == ["early", "noon", "evening", "untimed"]
+
+
+def test_generate_plan_orders_by_time_after_dropping_tasks_that_do_not_fit():
+    owner = Owner("J", 30)
+    pet = Pet("Rex", "dog")
+    owner.pets.append(pet)
+    pet.add_task(Task("late high", "x", 20, "high", preference="17:00"))
+    pet.add_task(Task("early low", "x", 20, "low", preference="07:00"))
+    pet.add_task(Task("early tiny", "x", 10, "low", preference="06:00"))
+    scheduler = Scheduler(owner)
+
+    plan = scheduler.generate_plan()
+
+    assert [t.name for t in plan] == ["early tiny", "late high"]
+    assert [t.name for t in scheduler.skipped_tasks] == ["early low"]

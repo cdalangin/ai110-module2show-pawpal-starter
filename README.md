@@ -58,17 +58,37 @@ Paste a sample of your app's CLI or Streamlit output here so a reader can see wh
 
 ```bash
 # Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest
 ```
 
-Sample test output:
+### What the tests cover
+
+The 17 tests in [tests/test_pawpal.py](tests/test_pawpal.py) check the scheduling behavior:
+
+- **Tasks and pets:** marking a task complete, and adding tasks to a pet.
+- **Input checks:** a zero or negative duration and an unknown priority are rejected; a duplicate task name is rejected for the same pet but allowed for a different pet, and a completed task's name can be reused.
+- **Sorting:** `Scheduler.sort_by_time()` puts tasks in chronological order (`"8:30"` before `"09:15"`) with untimed tasks last, and `generate_plan()` returns its tasks in time order even when priorities differ, including after some tasks are dropped for lack of time.
+- **Filtering:** `Owner.filter_tasks()` by pet name, by completion status, by both, and for an unknown pet.
+- **Recurring tasks:** completing a daily task creates a new task due the next day, a weekly task is due 7 days after its due date, a one-off task does not recur, and the next occurrence stays out of today's plan.
+- **Conflict detection:** `Scheduler.detect_conflicts()` flags tasks at the same time for one pet and for different pets (treating `"8:00"` and `"08:00"` as the same), and returns nothing when there are no clashes.
+
+### Test results
 
 ```
-# Paste your pytest output here
+============================= test session starts =============================
+platform win32 -- Python 3.14.7, pytest-9.1.1, pluggy-1.7.0
+rootdir: C:\Users\ishad\Desktop\justcodingthingz\Codepath\AIClass\ai110-module2show-pawpal-starter
+plugins: anyio-4.15.1
+collected 17 items
+
+tests\test_pawpal.py .................                                   [100%]
+
+============================= 17 passed in 0.05s ==============================
 ```
+
+### Confidence level: ★★★★★ (5 / 5)
+
+All 17 tests pass, and they cover the core logic, which are sorting, filtering, recurrence, conflict detection and input checks, including edge cases like untimed tasks, unpadded times and one-off tasks. 
 
 ## 📐 Smarter Scheduling
 

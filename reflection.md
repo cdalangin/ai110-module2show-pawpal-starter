@@ -14,10 +14,12 @@
         - Pets
         - Preferences
         - Availability
+        - get_all_tasks()
     - Pet
         - Name
         - Species
         - Tasks
+        - add_task()
     - Plan
         - Scheduled items
         - Skipped Tasks
@@ -30,6 +32,7 @@
         - Preference
         - Frequency
         - Completed
+        - mark_complete() 
 
 **b. Design changes**
 

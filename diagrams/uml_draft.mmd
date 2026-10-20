@@ -4,12 +4,14 @@ classDiagram
         +list~Pet~ pets
         +dict preferences
         +int availability
+        +get_all_tasks() list~Task~
     }
 
     class Pet {
         +str name
         +str species
         +list~Task~ tasks
+        +add_task(task) None
     }
 
     class Task {
@@ -20,6 +22,7 @@ classDiagram
         +str preference
         +str frequency
         +bool completed
+        +mark_complete() None
     }
 
     class Plan {

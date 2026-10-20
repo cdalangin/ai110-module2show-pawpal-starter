@@ -19,19 +19,24 @@ classDiagram
         +str category
         +int duration
         +str priority
+        +str pet_name
         +str preference
         +str frequency
         +bool completed
         +mark_complete() None
     }
 
-    class Plan {
+    class Scheduler {
+        +Owner owner
         +list~Task~ scheduled_items
         +list~Task~ skipped_tasks
+        +generate_plan() list~Task~
         +explain() str
     }
 
     Owner "1" --> "*" Pet : has
     Pet "1" --> "*" Task : has
-    Plan "1" o-- "*" Task : schedules
-    Plan ..> Owner : uses preferences and availability
+    Scheduler "1" --> "1" Owner : schedules for
+    Scheduler "1" o-- "*" Task : scheduled
+    Scheduler "1" o-- "*" Task : skipped
+    Owner ..> Task : collects via get_all_tasks

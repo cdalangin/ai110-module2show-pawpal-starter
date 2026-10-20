@@ -20,15 +20,18 @@
         - Species
         - Tasks
         - add_task()
-    - Plan
+    - Scheduler
+        - Owner
         - Scheduled items
         - Skipped Tasks
+        - generate_plan()
         - explain()
     - Task
         - Name
         - Category
         - Duration
         - Priority
+        - Pet name
         - Preference
         - Frequency
         - Completed
@@ -38,6 +41,7 @@
 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
+    - Scheduler didn't have a function that would generate a plan consisting of a list of items so the AI gave a suggestion to include that, and I think this makes sense for the requirement that generates a daily schedule
 
 ---
 
@@ -60,12 +64,16 @@
 **a. How you used AI**
 
 - How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
+    - I used the AI to check the classes I built to see if the relationships make sense. It also helped with brainstorming where to put the lists of other classes, like for example putting the list of tasks in Pets instead of the Owner since it could potentially vary from pet to pet
 - What kinds of prompts or questions were most helpful?
+    - I think the 
 
 **b. Judgment and verification**
 
 - Describe one moment where you did not accept an AI suggestion as-is.
+    - It originally just suggested to make the scheduler with the generate_plan() function with no other fields, I asked if there are other fields that need to be added
 - How did you evaluate or verify what the AI suggested?
+    - I read through the requirements again and noticed we also need to mention skilled plans and skipped tasks
 
 ---
 

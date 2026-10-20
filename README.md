@@ -47,11 +47,11 @@ pip install -r requirements.txt
 Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like:
 
 ```
-# e.g.:
-# Daily plan for Biscuit (Golden Retriever):
-#   08:00 — Morning walk (30 min) [priority: high]
-#   09:00 — Feeding (10 min) [priority: high]
-#   ...
+  + Morning walk for Biscuit at 08:00: high priority, fits in 30 min.
+  + Feeding for Whiskers at 09:00: high priority, fits in 10 min.
+  + Medication for Whiskers at 13:00: high priority, fits in 5 min.
+  + Play session for Whiskers at 16:30: medium priority, fits in 20 min.
+  - Grooming for Biscuit skipped: needs 45 min (low priority) but not enough time remained.
 ```
 
 ## 🧪 Testing PawPal+
@@ -92,3 +92,6 @@ Describe your app in numbered steps so a reader can follow along without watchin
 5. <!-- Add more steps as needed -->
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+
+## Implementation Sumamry
+The Owner class holds a list of Pet objects and a daily availability in minutes, and each Pet holds its own Task objects (name, category, duration, priority, preferred time, completion status). A Scheduler takes an Owner, gathers all of their pets' incomplete tasks, picks them by priority (high, then medium, then low) until the owner's available minutes run out, and sorts the chosen tasks by preferred time. It keeps the scheduled and skipped tasks in two lists, and its explain() method turns those lists into a plain-text reason for each decision, which main.py prints as "Today's Schedule" and "Why this plan?"
